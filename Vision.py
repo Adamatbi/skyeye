@@ -2,6 +2,7 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+from Plane import *
 
 class VisionModel:
     def __init__(self, model_path: str) -> None:
@@ -37,9 +38,12 @@ class VisionModelResult:
         return image
     
     def plot(self, markersize:int=1) -> plt.plot:
-        points = self.get_points()
-        plot = plt.plot([x[0] for x in points],[x[1] for x in points], 'ro', markersize=1)
+        plot = plt.plot([x[0] for x in self.points],[x[1] for x in self.points], 'ro', markersize=markersize)
         return plot
+    
+    def get_plane(self) -> list:
+        print(self.image_resolution)
+        return Plane(self.points,( self.image_resolution[1], self.image_resolution[0]))
     
     @property
     def points(self) -> np.ndarray:
