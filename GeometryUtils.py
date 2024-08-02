@@ -1,0 +1,35 @@
+import math
+
+
+def calculate_point_angle(rotation_axis: tuple , point1: tuple, point2: tuple) -> float:
+        """calculates the angle between two points with respect to a third point"""
+        vector1 = (point1[0] - rotation_axis[0], point1[1] - rotation_axis[1])
+        vector2 = (point2[0] - rotation_axis[0], point2[1] - rotation_axis[1])
+        
+        angle_vector1 = math.atan2(vector1[1], vector1[0])
+        angle_vector2 = math.atan2(vector2[1], vector2[0])
+
+        angle = math.degrees(angle_vector2 - angle_vector1)
+        angle = (angle + 360) % 360
+        
+        return angle
+
+def scale_points(points: list[tuple[float, float]], scale: float) -> list[tuple[float, float]]:
+    """scales a set of points by a given factor"""
+    scaled_points = [(x[0]*scale, x[1]*scale) for x in points]
+    return scaled_points
+
+def translate_points(points: list[tuple[float, float]], x: float, y: float) -> list[tuple[float,float]]:
+    """translates a set of points by a given amount"""
+    translated_points = [(pos[0]+x, pos[1]+y) for pos in points]
+    return translated_points
+                                                                                          
+
+def rotate_points(points: list[tuple[float, float]], angle: float, rotation_axis: tuple[float,float]) -> list[tuple[float,float]]:
+    """rotates a set of points by a given angle"""
+    theta = math.radians(-angle)
+    # translate to origin, rotate and translate back
+    points = [(pos[0]-rotation_axis[0], pos[1]-rotation_axis[1]) for pos in points]
+    points = [(pos[0]*math.cos(theta) - pos[1]*math.sin(theta), pos[0]*math.sin(theta) + pos[1]*math.cos(theta)) for pos in points]
+    points = [(pos[0]+rotation_axis[0], pos[1]+rotation_axis[1]) for pos in points]
+    return points                 
