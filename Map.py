@@ -1,5 +1,6 @@
 import osmnx as ox
 from shapely.geometry import Polygon
+from GeometryUtils import *
 from Plane import *
 import math
 
@@ -39,16 +40,15 @@ class BaseMap:
     def get_plane(self) -> Plane:
         building_offsets = []
         origin_lon, origin_lat, far_corner_lon, far_corner_lat = self.polygon.bounds
-        size = self.__calculate_offset_in_meters(origin_lat, origin_lon, far_corner_lat, far_corner_lon)
+        size = calculate_north_east_offset(origin_lat, origin_lon, far_corner_lat, far_corner_lon)
         reference_corner = self.corners[3]
         for building_coord in self.points:
-            building_offsets.append(self.__calculate_offset_in_meters(reference_corner[0], reference_corner[1], building_coord[0], building_coord[1]))
+            building_offsets.append(calculate_north_east_offset(reference_corner[0], reference_corner[1], building_coord[0], building_coord[1]))
         return Plane(building_offsets, size)
     
     def calculate_coordinates_from_offset(self, offset: tuple[float, float]) -> tuple[float, float]:
         lon, lat, _,_ = self.polygon.bounds
-        earth_radius = 6371000
-    
+
         # Convert distance from meters to degrees
         delta_lat = offset[1] / 111000
         
@@ -59,48 +59,7 @@ class BaseMap:
         new_lat = lat + delta_lat
         new_lon = lon + delta_lon
         
-        return (new_lat, new_lon)
-    
-
-    def __calculate_offset_in_meters(self,lat1, lon1, lat2, lon2):
-        # Calculate distance in meters using haversine formula
-        distance = self.__haversine(lat1, lon1, lat2, lon2)
-        
-        # Calculate bearing
-        phi1 = math.radians(lat1)
-        phi2 = math.radians(lat2)
-        delta_lambda = math.radians(lon2 - lon1)
-        
-        y = math.sin(delta_lambda) * math.cos(phi2)
-        x = math.cos(phi1) * math.sin(phi2) - \
-            math.sin(phi1) * math.cos(phi2) * math.cos(delta_lambda)
-        bearing = math.atan2(y, x)
-        
-        # Calculate north and east components
-        distance_north = distance * math.cos(bearing)
-        distance_east = distance * math.sin(bearing)
-    
-        return distance_east,distance_north
-    
-    def __haversine(self,lat1, lon1, lat2, lon2):
-        # Radius of the Earth in meters
-        R = 6371000
-
-        # Convert latitude and longitude from degrees to radians
-        phi1 = math.radians(lat1)
-        phi2 = math.radians(lat2)
-        delta_phi = math.radians(lat2 - lat1)
-        delta_lambda = math.radians(lon2 - lon1)
-
-        # Haversine formula
-        a = math.sin(delta_phi / 2.0)**2 + \
-            math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0)**2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-        # Distance between the two points
-        distance = R * c
-        return distance
-    
+        return (new_lat, new_lon) 
 
 class BaseMapGenerator:
     def __init__(self) -> None:

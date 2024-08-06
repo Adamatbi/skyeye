@@ -32,4 +32,48 @@ def rotate_points(points: list[tuple[float, float]], angle: float, rotation_axis
     points = [(pos[0]-rotation_axis[0], pos[1]-rotation_axis[1]) for pos in points]
     points = [(pos[0]*math.cos(theta) - pos[1]*math.sin(theta), pos[0]*math.sin(theta) + pos[1]*math.cos(theta)) for pos in points]
     points = [(pos[0]+rotation_axis[0], pos[1]+rotation_axis[1]) for pos in points]
-    return points                 
+    return points
+
+def calculate_euclidean_distance(point1: tuple[float, float], point2: tuple[float, float]) -> float:
+    """calculates the euclidean distance between two points"""
+    return math.sqrt((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2)
+
+def calculate_north_east_offset(lat1, lon1, lat2, lon2):
+        # Calculate distance in meters using haversine formula
+        distance = haversine(lat1, lon1, lat2, lon2)
+        
+        # Calculate bearing
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        delta_lambda = math.radians(lon2 - lon1)
+        
+        y = math.sin(delta_lambda) * math.cos(phi2)
+        x = math.cos(phi1) * math.sin(phi2) - \
+            math.sin(phi1) * math.cos(phi2) * math.cos(delta_lambda)
+        bearing = math.atan2(y, x)
+        
+        # Calculate north and east components
+        distance_north = distance * math.cos(bearing)
+        distance_east = distance * math.sin(bearing)
+    
+        return distance_east,distance_north    
+
+def haversine(lat1, lon1, lat2, lon2):
+        # Radius of the Earth in meters
+        R = 6371000
+
+        # Convert latitude and longitude from degrees to radians
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        delta_phi = math.radians(lat2 - lat1)
+        delta_lambda = math.radians(lon2 - lon1)
+
+        # Haversine formula
+        a = math.sin(delta_phi / 2.0)**2 + \
+            math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+        # Distance between the two points
+        distance = R * c
+        return distance
+    
