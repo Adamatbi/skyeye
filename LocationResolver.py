@@ -1,5 +1,6 @@
 from Vision import *
 from Map import *
+import time
     
 class LocationResolver:
     def __init__(self,vision_model_path:str) -> None:
@@ -8,7 +9,8 @@ class LocationResolver:
         self.comparitor = PlaneComparitor()
 
 
-    def get_location(self, image_path:str,search_area: Polygon, fingerprint_point_count: int = 7) -> tuple:
+    def get_location(self, image_path:str,search_area: Polygon, drone_height_range:tuple[float,float], fingerprint_point_count: int = 7) -> tuple:
+    
         #create a plane from the image
         vision_result = self.vision_model.run_inference(image_path)
         photo_plane = vision_result.get_plane()
@@ -27,15 +29,29 @@ class LocationResolver:
         photo_point_matches = [photo_plane.base_points[x] for x in fingerprint_matches["overlay_matches"]]
         map_point_matches = [map_plane.base_points[x] for x in fingerprint_matches["base_matches"]]
 
-        possible_solutions = self.__find_possible_solutions(photo_plane, map_plane, photo_point_matches, map_point_matches,20)
+        match_comparisons = 15
+        solution_fit = float("inf")
+
+        #
+        while(solution_fit>6):
+            possible_solutions = self.__find_possible_solutions(photo_plane, map_plane, photo_point_matches, map_point_matches, drone_height_range, match_comparisons)
+            if len(possible_solutions)>0:
+                solution_fit = possible_solutions[0][0]
+            match_comparisons *= 2
+
+        return possible_solutions[0]
 
 
         
-    def __find_possible_solutions(self, photo_plane: Plane, map_plane: Plane, photo_matches: list[tuple[float,float]], map_matches: list[tuple[float,float]], testing_range = 20) -> list:
+    def __find_possible_solutions(self, photo_plane: Plane, map_plane: Plane, photo_matches: list[tuple[float,float]], map_matches: list[tuple[float,float]], drone_height_range: tuple[float,float], testing_range:int = 20) -> list:
         """line up all combinations of two matching fingerprint points from the photo and map planes and check the quality of the solution"""
         possible_solutions = []
         for index1 in range(testing_range):
             for index2 in range(index1+1, testing_range):
+                
+                drone_height = self.__calculate_drone_height(map_plane, photo_plane,map_matches[index1], map_matches[index2], photo_matches[index1], photo_matches[index2])
+                if drone_height<drone_height_range[0] or drone_height>drone_height_range[1]:
+                    continue
 
                 rotation, translation, scale = self.__calculate_transformations_from_2_points(map_matches[index1], map_matches[index2], photo_matches[index1], photo_matches[index2],photo_plane.size) 
                 
@@ -56,7 +72,7 @@ class LocationResolver:
 
     def __calculate_transformations_from_2_points(self, base_point1: tuple[float,float], base_point2: tuple[float,float], overlay_point1: tuple[float,float], overlay_point2: tuple[float,float], overlay_plane_size: tuple[float,float]) -> tuple[float, tuple[float,float], float]:
         """takes in two points to match from base and overlay and returns the rotation, translation and scale needed to match the two points"""
-        if base_point1 == base_point2:
+        if base_point1 == base_point2 or overlay_point1 == overlay_point2:
             return 0, (0,0), 1
 
         temp_translation = (base_point1[0]-overlay_point1[0],base_point1[1]-overlay_point1[1])
@@ -75,6 +91,21 @@ class LocationResolver:
         translation = (base_point1[0]-overlay_point1[0],base_point1[1]-overlay_point1[1])
 
         return rotation, translation, scale
+    
+    def __calculate_drone_height(self, map_plane: Plane, photo_plane: Plane, map_point1: tuple[float,float], map_point2: tuple[float,float], photo_point1: tuple[float,float], photo_point2: tuple[float,float],) -> float:    
+        """calculate drone height based on point locations"""
+        map_distance = calculate_euclidean_distance(map_point1, map_point2)
+
+        if photo_point1 == photo_point2:
+            return 0
+        
+        camera_fov = 83
+        camera_frame_diagonal_distance = calculate_euclidean_distance((0,0), photo_plane.size)
+        points_diagonal_distance = calculate_euclidean_distance(photo_point1, photo_point2)
+
+        points_vision_angle = camera_fov * (points_diagonal_distance / camera_frame_diagonal_distance)
+        drone_height = map_distance / math.tan(math.radians(points_vision_angle))
+        return drone_height
     
     def plot_map_and_photo(self,map_plane, photo_plane):
         map_points = map_plane.transformed_points
