@@ -1,5 +1,5 @@
 import math
-
+from shapely.geometry import Polygon
 
 def calculate_point_angle(rotation_axis: tuple , point1: tuple, point2: tuple) -> float:
         """calculates the angle between two points with respect to a third point"""
@@ -34,6 +34,28 @@ def rotate_points(points: list[tuple[float, float]], angle: float, rotation_axis
     points = [(pos[0]+rotation_axis[0], pos[1]+rotation_axis[1]) for pos in points]
     return points
 
+
+def extract_centre_of_polygon(polygon: Polygon) -> tuple[float, float]:
+        minx, miny, maxx, maxy = polygon.bounds
+
+        center_x = (minx + maxx) / 2
+        center_y = (miny + maxy) / 2
+
+        return (center_y,center_x)
+
+def calculate_coordinates_from_offset(lat: float,lon: float, offset_north:float, offset_east:float) -> tuple[float, float]:
+        # Convert distance from meters to degrees
+        delta_lat = offset_north / 111000
+        
+        # Convert longitude considering latitude
+        delta_lon = offset_east / (111000 * math.cos(math.radians(lat)))
+        
+        # New latitude and longitude
+        new_lat = lat + delta_lat
+        new_lon = lon + delta_lon
+        
+        return (new_lat, new_lon) 
+
 def calculate_euclidean_distance(point1: tuple[float, float], point2: tuple[float, float]) -> float:
     """calculates the euclidean distance between two points"""
     return math.sqrt((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2)
@@ -59,7 +81,6 @@ def calculate_north_east_offset(lat1, lon1, lat2, lon2):
         return distance_east,distance_north    
 
 def haversine(lat1, lon1, lat2, lon2):
-        # Radius of the Earth in meters
         R = 6371000
 
         # Convert latitude and longitude from degrees to radians
@@ -73,7 +94,6 @@ def haversine(lat1, lon1, lat2, lon2):
             math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0)**2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-        # Distance between the two points
         distance = R * c
         return distance
     

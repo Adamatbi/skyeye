@@ -14,7 +14,7 @@ class BaseMap:
     def points(self) -> list:
         if self.__points is not None:
             return self.__points
-        self.__points = list(self.features['geometry'].apply(self.__extract_centre_of_polygon))
+        self.__points = list(self.features['geometry'].apply(extract_centre_of_polygon))
         return self.__points
     
     @property
@@ -23,15 +23,6 @@ class BaseMap:
         x = list(xx)
         y = list(yy)
         return list(zip(y, x))
-    
-    def __extract_centre_of_polygon(self, polygon: Polygon) -> tuple[float, float]:
-        minx, miny, maxx, maxy = polygon.bounds
-
-        # Calculate the center point
-        center_x = (minx + maxx) / 2
-        center_y = (miny + maxy) / 2
-
-        return (center_y,center_x)
     
     def plot(self, markersize:int=1) -> plt.plot:
         plot = plt.plot([x[0] for x in self.points],[x[1] for x in self.points], 'ro', markersize=markersize)
@@ -45,21 +36,6 @@ class BaseMap:
         for building_coord in self.points:
             building_offsets.append(calculate_north_east_offset(reference_corner[0], reference_corner[1], building_coord[0], building_coord[1]))
         return Plane(building_offsets, size)
-    
-    def calculate_coordinates_from_offset(self, offset: tuple[float, float]) -> tuple[float, float]:
-        lon, lat, _,_ = self.polygon.bounds
-
-        # Convert distance from meters to degrees
-        delta_lat = offset[1] / 111000
-        
-        # Convert longitude considering latitude
-        delta_lon = offset[0] / (111000 * math.cos(math.radians(lat)))
-        
-        # New latitude and longitude
-        new_lat = lat + delta_lat
-        new_lon = lon + delta_lon
-        
-        return (new_lat, new_lon) 
 
 class BaseMapGenerator:
     def __init__(self) -> None:
