@@ -1,7 +1,5 @@
 from GeometryUtils import *
 from matplotlib import pyplot as plt
-import math
-import numpy as np
 from scipy.spatial import KDTree
 
 class Plane:
@@ -59,14 +57,13 @@ class PlaneComparitor:
     def __init__(self) -> None:
         pass
 
-    def measure_offsets(self, plane1: Plane, plane2: Plane, outlier_threshold: float = 0.95) -> float:
+    def measure_offsets(self, plane1: Plane, plane2: Plane, outlier_threshold: float = 0.9) -> float:
         transformed_points1 = plane1.transformed_points
         tree = KDTree(plane2.transformed_points)
         distances, _ = tree.query(transformed_points1)
         return distances
     
     def discard_outliers(self, distances: list[float], threshold: float) -> list[float]:
-        
         if threshold < 0 or threshold > 1:
             raise ValueError("Threshold must be between 0 and 1")
         distances.sort()
@@ -83,8 +80,8 @@ class PlaneComparitor:
             distance_ratios = (distances/distances[1])[2:]
             angles = [calculate_point_angle(transformed_points[i], transformed_points[indexes[1]], transformed_points[j]) for j in indexes[2:]]
             fingerprints.append(Fingerprint(distance_ratios,angles))
-        return fingerprints            
-    
+        return fingerprints
+
     def compare_fingerprint(self, base_fingerprint: Fingerprint, overlay_fingerprint: Fingerprint, num_drop:int) -> float:
         """loss is calculated as the sum of the product of the angle and distance differences between each of the overlay_fingerprint points and its closest match from base_fingerprint.
         the worst num_drop losses are dropped before summing to account for noise"""
@@ -102,3 +99,17 @@ class PlaneComparitor:
 
         sum_loss = sum(losses[:-num_drop]) if num_drop>0 else sum(losses)
         return sum_loss
+    
+    def match_fingerprints(self, base_fingerprints: list[Fingerprint], overlay_fingerprints: list[Fingerprint], ) -> dict:
+        all_matches = []
+        for overlay_index,overlay_fingerprint in enumerate(overlay_fingerprints):
+            for base_index,base_fingerprint in enumerate(base_fingerprints):
+                fingerprint_loss = self.compare_fingerprint(base_fingerprint, overlay_fingerprint,1)
+                all_matches.append((fingerprint_loss,base_index, overlay_index))
+
+        all_matches.sort(key=lambda x: x[0])
+
+        losses = [x[0] for x in all_matches]
+        base_match_indexes = [x[1] for x in all_matches]
+        overlay_match_indexes = [x[2] for x in all_matches]
+        return {'losses':losses, 'base_matches':base_match_indexes, 'overlay_matches':overlay_match_indexes}
