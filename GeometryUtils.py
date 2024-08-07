@@ -43,7 +43,7 @@ def extract_centre_of_polygon(polygon: Polygon) -> tuple[float, float]:
 
         return (center_y,center_x)
 
-def calculate_coordinates_from_offset(lat: float,lon: float, offset_north:float, offset_east:float) -> tuple[float, float]:
+def calculate_coordinates_from_offset(lat: float, lon: float, offset_east:float, offset_north:float) -> tuple[float, float]:
         # Convert distance from meters to degrees
         delta_lat = offset_north / 111000
         
