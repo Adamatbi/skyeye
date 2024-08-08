@@ -42,7 +42,6 @@ class VisionModelResult:
         return plot
     
     def get_plane(self) -> list:
-        print(self.image_resolution)
         return Plane(self.points,( self.image_resolution[1], self.image_resolution[0]))
     
     @property
