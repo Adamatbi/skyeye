@@ -9,7 +9,7 @@ class LocationResolver:
         self.comparitor = PlaneComparitor()
 
 
-    def get_location(self, image_path:str,search_area: Polygon, drone_height_range:tuple[float,float], fingerprint_point_count: int = 7) -> tuple:
+    def get_location(self, image_path:str,search_area: Polygon, drone_height_range:tuple[float,float], fingerprint_point_count: int = 7) -> dict:
         #create a plane from the image
         vision_result = self.vision_model.run_inference(image_path)
         photo_plane = vision_result.get_plane()
@@ -48,8 +48,9 @@ class LocationResolver:
         print(photo_centre)
         lat, lon = basemap.corners[3]
         drone_coords = calculate_coordinates_from_offset(lat,lon, photo_centre[0], photo_centre[1])
+        drone_height = int(possible_solutions[0][4])
         
-        return drone_coords
+        return {"location":drone_coords, "height":drone_height} 
 
     def __find_possible_solutions(self, photo_plane: Plane, map_plane: Plane, photo_matches: list[tuple[float,float]], map_matches: list[tuple[float,float]], drone_height_range: tuple[float,float], testing_range:int = 20) -> list:
         """line up all combinations of two matching fingerprint points from the photo and map planes and check the quality of the solution"""
@@ -71,7 +72,7 @@ class LocationResolver:
                 distances = self.comparitor.measure_offsets(photo_plane, map_plane)
                 distances = self.comparitor.discard_outliers(distances, 0.90)
 
-                possible_solutions.append((sum(distances)/len(distances), rotation, translation, scale))
+                possible_solutions.append((sum(distances)/len(distances), rotation, translation, scale, drone_height))
 
         possible_solutions.sort(key=lambda x: x[0])
         return possible_solutions
