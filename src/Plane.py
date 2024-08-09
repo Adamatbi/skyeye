@@ -1,4 +1,4 @@
-from GeometryUtils import *
+from src.utils.GeometryUtils import *
 from matplotlib import pyplot as plt
 from scipy.spatial import KDTree
 

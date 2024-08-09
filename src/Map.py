@@ -1,7 +1,7 @@
 import osmnx as ox
 from shapely.geometry import Polygon
-from GeometryUtils import *
-from Plane import *
+from src.utils.GeometryUtils import *
+from src.Plane import *
 import math
 
 class BaseMap:

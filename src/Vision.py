@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-from Plane import *
+from src.Plane import *
 
 class VisionModel:
     def __init__(self, model_path: str) -> None:

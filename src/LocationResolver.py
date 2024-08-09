@@ -1,5 +1,5 @@
-from Vision import *
-from Map import *
+from src.Vision import *
+from src.Map import *
 import time
     
 class LocationResolver:
