@@ -1,6 +1,11 @@
 import math
 from shapely.geometry import Polygon
 
+
+def polygon_from_points(corners):
+    coordinates = [(corners[0][1], corners[0][0]),(corners[1][1], corners[0][0]),(corners[1][1], corners[1][0]),(corners[0][1], corners[1][0]),(corners[0][1], corners[0][0])]
+    return Polygon(coordinates)
+
 def calculate_point_angle(rotation_axis: tuple , point1: tuple, point2: tuple) -> float:
         """calculates the angle between two points with respect to a third point"""
         vector1 = (point1[0] - rotation_axis[0], point1[1] - rotation_axis[1])
