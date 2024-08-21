@@ -45,7 +45,6 @@ class LocationResolver:
 
         #calculate the drone coordinates
         photo_centre = photo_plane.transformed_centre
-        print(photo_centre)
         lat, lon = basemap.corners[3]
         drone_coords = calculate_coordinates_from_offset(lat,lon, photo_centre[0], photo_centre[1])
         drone_height = int(possible_solutions[0][4])
